@@ -3,7 +3,6 @@
 export const dynamic = "force-dynamic";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -36,7 +35,6 @@ function GoogleIcon() {
 }
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -49,11 +47,11 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       toast({ title: "로그인 실패", description: error.message, variant: "destructive" });
+      setLoading(false);
     } else {
-      router.push("/app");
-      router.refresh();
+      // 풀 리로드로 서버 세션을 확실히 갱신
+      window.location.href = "/app";
     }
-    setLoading(false);
   }
 
   async function handleGoogleLogin() {
@@ -62,7 +60,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${location.origin}/auth/callback`,
+        redirectTo: `${location.origin}/callback`,
       },
     });
     if (error) {

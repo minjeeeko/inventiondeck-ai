@@ -41,7 +41,7 @@ export default function SignupPage() {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: `${location.origin}/auth/callback` },
+      options: { emailRedirectTo: `${location.origin}/callback` },
     });
     if (error) {
       toast({ title: "회원가입 실패", description: error.message, variant: "destructive" });
@@ -56,7 +56,7 @@ export default function SignupPage() {
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${location.origin}/auth/callback` },
+      options: { redirectTo: `${location.origin}/callback` },
     });
     if (error) {
       toast({ title: "Google 회원가입 실패", description: error.message, variant: "destructive" });
