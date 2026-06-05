@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function AppPage() {
@@ -6,15 +7,32 @@ export default async function AppPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
-      <h1 className="text-2xl font-bold">내 프로젝트</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        {user?.email} 님의 프로젝트 목록
-      </p>
-      <div className="mt-8 rounded-lg border border-dashed p-12 text-center text-muted-foreground">
-        아직 프로젝트가 없습니다. 새 프로젝트를 만들어 보세요.
-      </div>
-    </div>
-  );
+  if (!user) redirect("/login");
+
+  // 가장 최근 프로젝트 조회
+  const { data: projects } = await supabase
+    .from("projects")
+    .select("id")
+    .eq("user_id", user.id)
+    .order("updated_at", { ascending: false })
+    .limit(1);
+
+  if (projects && projects.length > 0) {
+    // 기존 프로젝트 → 카드 선택 화면으로
+    redirect(`/app/projects/${projects[0].id}/cards`);
+  }
+
+  // 프로젝트 없으면 새 프로젝트 자동 생성
+  const { data: newProject, error } = await supabase
+    .from("projects")
+    .insert({ user_id: user.id, name: "새 프로젝트", stage: 1 })
+    .select("id")
+    .single();
+
+  if (error || !newProject) {
+    // Supabase 미연결 상태(개발 환경) → 임시 ID로 카드 화면 진입
+    redirect("/app/projects/demo/cards");
+  }
+
+  redirect(`/app/projects/${newProject.id}/cards`);
 }
